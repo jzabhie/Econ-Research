@@ -2,7 +2,14 @@ import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
 import { getDb } from "./db";
 
-const JWT_SECRET = process.env.JWT_SECRET || "econ-research-dev-secret-change-in-production";
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET environment variable must be set in production");
+  }
+  return "econ-research-dev-secret-do-not-use-in-production";
+}
 
 export interface TokenPayload {
   userId: number;
@@ -19,12 +26,12 @@ export function verifyPassword(password: string, hash: string): boolean {
 }
 
 export function createToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: "24h" });
 }
 
 export function verifyToken(token: string): TokenPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as TokenPayload;
+    return jwt.verify(token, getJwtSecret()) as TokenPayload;
   } catch {
     return null;
   }
