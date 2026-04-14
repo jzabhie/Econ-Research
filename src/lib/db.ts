@@ -92,6 +92,9 @@ function seedAdminUser(db: Database.Database) {
   if (userCount === 0) {
     const email = process.env.ADMIN_EMAIL || "abhish42sit@gmail.com";
     const password = process.env.ADMIN_PASSWORD || "Devils@12345";
+    if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+      console.warn("⚠️  Using default admin credentials. Set ADMIN_EMAIL and ADMIN_PASSWORD environment variables for production.");
+    }
     const hash = bcryptjs.hashSync(password, 10);
     db.prepare(
       "INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)"

@@ -97,6 +97,9 @@ if (!existingAdmin) {
     "admin"
   );
   console.log(`✅ Admin user created: ${adminEmail}`);
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+    console.warn("⚠️  Using default credentials. Set ADMIN_EMAIL and ADMIN_PASSWORD environment variables for production.");
+  }
 } else {
   console.log("ℹ️  Admin user already exists");
 }
