@@ -85,16 +85,21 @@ db.exec(`
 `);
 
 // Create admin user
-const adminPassword = bcryptjs.hashSync("admin123", 10);
-const existingAdmin = db.prepare("SELECT id FROM users WHERE email = ?").get("admin@econresearch.edu");
+const adminEmail = process.env.ADMIN_EMAIL || "abhish42sit@gmail.com";
+const adminPasswordPlain = process.env.ADMIN_PASSWORD || "Devils@12345";
+const adminPassword = bcryptjs.hashSync(adminPasswordPlain, 10);
+const existingAdmin = db.prepare("SELECT id FROM users WHERE email = ?").get(adminEmail);
 if (!existingAdmin) {
   db.prepare("INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)").run(
-    "admin@econresearch.edu",
+    adminEmail,
     adminPassword,
-    "Admin Professor",
+    "Admin",
     "admin"
   );
-  console.log("✅ Admin user created: admin@econresearch.edu / admin123");
+  console.log(`✅ Admin user created: ${adminEmail}`);
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+    console.warn("⚠️  Using default credentials. Set ADMIN_EMAIL and ADMIN_PASSWORD environment variables for production.");
+  }
 } else {
   console.log("ℹ️  Admin user already exists");
 }
@@ -160,4 +165,4 @@ if (examCount === 0) {
 db.close();
 console.log("\n🎉 Database seeded successfully!");
 console.log("   Database location:", DB_PATH);
-console.log("   Login: admin@econresearch.edu / admin123");
+console.log(`   Login: ${adminEmail}`);

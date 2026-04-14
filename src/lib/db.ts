@@ -1,5 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "fs";
+import bcryptjs from "bcryptjs";
 
 const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), "data", "app.db");
 
@@ -7,10 +9,12 @@ let db: Database.Database | null = null;
 
 export function getDb(): Database.Database {
   if (!db) {
+    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
     db = new Database(DB_PATH);
     db.pragma("journal_mode = WAL");
     db.pragma("foreign_keys = ON");
     initSchema(db);
+    seedAdminUser(db);
   }
   return db;
 }
@@ -81,6 +85,21 @@ function initSchema(db: Database.Database) {
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
   `);
+}
+
+function seedAdminUser(db: Database.Database) {
+  const userCount = (db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number }).c;
+  if (userCount === 0) {
+    const email = process.env.ADMIN_EMAIL || "abhish42sit@gmail.com";
+    const password = process.env.ADMIN_PASSWORD || "Devils@12345";
+    if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+      console.warn("⚠️  Using default admin credentials. Set ADMIN_EMAIL and ADMIN_PASSWORD environment variables for production.");
+    }
+    const hash = bcryptjs.hashSync(password, 10);
+    db.prepare(
+      "INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)"
+    ).run(email, hash, "Admin", "admin");
+  }
 }
 
 export function closeDb() {
